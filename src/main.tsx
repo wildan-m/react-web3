@@ -12,7 +12,7 @@ const config = createConfig({
   chains: [mainnet],
   connectors: [injected()],
   transports: {
-    [mainnet.id]: http('https://eth-mainnet.g.alchemy.com/v2/YOUR-API-KEY'), // Replace with your Alchemy API key
+    [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`),
   },
 })
 
