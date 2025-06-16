@@ -8,11 +8,16 @@ import { http } from 'viem'
 import App from './App'
 import './index.css'
 
+// Check if MetaMask is installed
+const isMetaMaskInstalled = typeof window !== 'undefined' && window.ethereum?.isMetaMask
+
 const config = createConfig({
   chains: [mainnet],
   connectors: [
     injected({
       target: 'metaMask',
+      shimDisconnect: true,
+      shimChainChangedDisconnect: true,
     }),
   ],
   transports: {
@@ -26,7 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <App isMetaMaskInstalled={isMetaMaskInstalled} />
       </QueryClientProvider>
     </WagmiProvider>
   </React.StrictMode>,
