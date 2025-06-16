@@ -2,10 +2,6 @@ import { useAccount, useConnect, useDisconnect, useConfig } from 'wagmi'
 import { useState, useEffect } from 'react'
 import { useWalletDetection } from './hooks/useWalletDetection'
 
-interface AppProps {
-  isMetaMaskInstalled: boolean
-}
-
 // Mock wallet data for demo mode
 const MOCK_WALLET_DATA = {
   address: '0x742d35Cc6634C0532925a3b8D5c3c3Bd3c6a9c3d',
@@ -18,7 +14,7 @@ const MOCK_WALLET_DATA = {
   ]
 }
 
-function App({ isMetaMaskInstalled }: AppProps) {
+function App() {
   const { address, isConnected, status } = useAccount()
   const { connect, connectors, error: connectError, isPending } = useConnect()
   const { disconnect } = useDisconnect()
@@ -37,24 +33,27 @@ function App({ isMetaMaskInstalled }: AppProps) {
           id: chain.id,
           name: chain.name,
         })),
-        connectorNames: config?.connectors?.map(connector => connector.name),
+        connectorNames: config?.connectors?.map(connector => ({
+          name: connector.name,
+          ready: connector.ready,
+          id: connector.id
+        })),
       },
       connection: {
         status,
         isConnected: isConnected || demoMode,
         address: address || (demoMode ? MOCK_WALLET_DATA.address : null),
+        isPending,
       },
       error: connectError ? {
         name: connectError.name,
         message: connectError.message,
       } : null,
-      metaMask: {
-        isInstalled: isMetaMaskInstalled,
-      },
+      walletDetection: walletInfo,
       demoMode,
     }
     setDebugInfo(JSON.stringify(info, null, 2))
-  }, [config, status, isConnected, address, connectError, isMetaMaskInstalled, demoMode])
+  }, [config, status, isConnected, address, connectError, walletInfo, demoMode, isPending])
 
   const handleConnect = async (connector: any) => {
     try {
@@ -146,23 +145,54 @@ function App({ isMetaMaskInstalled }: AppProps) {
                       </button>
                       
                       <div className="grid gap-3">
-                        {connectors.map((connector) => (
-                          <button
-                            key={connector.id}
-                            onClick={() => handleConnect(connector)}
-                            disabled={!connector.ready}
-                            className={`w-full flex items-center justify-center py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-colors ${
-                              connector.ready
-                                ? 'text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                                : 'text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                            }`}
-                          >
-                            {connector.name}
-                            {connector.name === 'MetaMask' && !isMetaMaskInstalled && (
-                              <span className="ml-2 text-xs text-red-500">(Not Installed)</span>
-                            )}
-                          </button>
-                        ))}
+                        {connectors.map((connector) => {
+                          const isReady = connector.ready || connector.name === 'Injected'
+                          const isAvailable = walletInfo.hasAnyWallet || connector.name === 'Injected'
+                          
+                          return (
+                            <button
+                              key={connector.id}
+                              onClick={() => handleConnect(connector)}
+                              disabled={!isReady || !isAvailable || isPending}
+                              className={`w-full flex items-center justify-between py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-colors ${
+                                isReady && isAvailable && !isPending
+                                  ? 'text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                  : 'text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                              }`}
+                            >
+                              <span>
+                                {connector.name}
+                                {isPending && ' (Connecting...)'}
+                              </span>
+                              <span className="text-xs">
+                                {!isReady && '(Not Ready)'}
+                                {!isAvailable && '(Not Available)'}
+                                {isReady && isAvailable && '✓'}
+                              </span>
+                            </button>
+                          )
+                        })}
+                        
+                        {walletInfo.availableWallets.length > 0 && (
+                          <div className="mt-2 p-2 bg-green-50 dark:bg-green-900 rounded-lg">
+                            <p className="text-xs text-green-700 dark:text-green-300">
+                              Detected wallets: {walletInfo.availableWallets.join(', ')}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {!walletInfo.hasAnyWallet && (
+                          <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                              No wallet detected. To connect a real wallet:
+                            </p>
+                            <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                              <li>• Install <a href="https://metamask.io/" target="_blank" rel="noopener noreferrer" className="underline">MetaMask</a></li>
+                              <li>• Install <a href="https://www.coinbase.com/wallet" target="_blank" rel="noopener noreferrer" className="underline">Coinbase Wallet</a></li>
+                              <li>• Install <a href="https://rabby.io/" target="_blank" rel="noopener noreferrer" className="underline">Rabby</a></li>
+                            </ul>
+                          </div>
+                        )}
                         
                         <button
                           onClick={handleDemoMode}

@@ -29,7 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <App isMetaMaskInstalled={isMetaMaskInstalled} />
+        <App />
       </QueryClientProvider>
     </WagmiProvider>
   </React.StrictMode>,
