@@ -1,12 +1,22 @@
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
+import { useState } from 'react'
 
 function App() {
   const { address, isConnected } = useAccount()
-  const { connect } = useConnect({
-    connector: injected(),
-  })
+  const { connect, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
+  const [error, setError] = useState<string | null>(null)
+
+  const handleConnect = async () => {
+    try {
+      setError(null)
+      const connector = injected()
+      await connect({ connector })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet')
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -20,12 +30,19 @@ function App() {
 
         <div className="mt-8 space-y-4">
           {!isConnected ? (
-            <button
-              onClick={() => connect()}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Connect Wallet
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={handleConnect}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Connect Wallet
+              </button>
+              {(error || connectError) && (
+                <div className="text-red-500 text-sm text-center">
+                  {error || connectError?.message}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
