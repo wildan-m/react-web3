@@ -1,5 +1,6 @@
 import { useAccount, useConnect, useDisconnect, useConfig } from 'wagmi'
 import { useState, useEffect } from 'react'
+import { useWalletDetection } from './hooks/useWalletDetection'
 
 interface AppProps {
   isMetaMaskInstalled: boolean
@@ -19,9 +20,10 @@ const MOCK_WALLET_DATA = {
 
 function App({ isMetaMaskInstalled }: AppProps) {
   const { address, isConnected, status } = useAccount()
-  const { connect, connectors, error: connectError } = useConnect()
+  const { connect, connectors, error: connectError, isPending } = useConnect()
   const { disconnect } = useDisconnect()
   const config = useConfig()
+  const walletInfo = useWalletDetection()
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [demoMode, setDemoMode] = useState(false)
