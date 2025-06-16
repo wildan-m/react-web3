@@ -10,7 +10,11 @@ import './index.css'
 
 const config = createConfig({
   chains: [mainnet],
-  connectors: [injected()],
+  connectors: [
+    injected({
+      target: 'metaMask',
+    }),
+  ],
   transports: {
     [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`),
   },
